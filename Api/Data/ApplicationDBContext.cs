@@ -12,6 +12,7 @@ namespace Api.Data
 
         public DbSet<User> Users { get; set; }
         public DbSet<Card> Cards { get; set; }
+        public DbSet<Point> Points { get; set; }
 
 
         //"Server=localhost\\SQLEXPRESS;Database=master;Trusted_Connection=True;"
