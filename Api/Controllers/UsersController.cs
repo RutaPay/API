@@ -23,6 +23,16 @@ namespace Api.Controllers
             _context = context;
         }
 
+        public async Task<ActionResult<User>> GetUserID(string email)
+        {
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
+            if (user == null)
+            {
+                return NotFound();
+            }
+            return user;
+        }
+
         // GET: api/Users
         [HttpGet]
         public async Task<ActionResult<IEnumerable<User>>> GetUsers()
