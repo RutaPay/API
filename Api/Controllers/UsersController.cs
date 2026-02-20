@@ -7,6 +7,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Api.Data;
 using Api.Models;
+using Api.Dtos;
+using Api.Service;
 
 namespace Api.Controllers
 {
@@ -85,6 +87,47 @@ namespace Api.Controllers
         public async Task<ActionResult<User>> PostUser(User user)
         {
             _context.Users.Add(user);
+            await _context.SaveChangesAsync();
+
+            return CreatedAtAction("GetUser", new { id = user.Id }, user);
+        }
+
+        // POST: api/Users/register
+        [HttpPost("register")]
+        public async Task<ActionResult<User>> Register(RegisterUserDto registerDto)
+        {
+            var salt = HashService.GenerateSalt();
+            var user = new User
+            {
+                FullName = registerDto.FullName,
+                LastNames = registerDto.LastNames,
+                Email = registerDto.Email,
+                PhoneNumber = registerDto.PhoneNumber,
+                CreatedOn = DateTime.Now,
+                PasswordHash = HashService.Hash(registerDto.Password, salt),
+                Salt = salt
+            };
+
+            _context.Users.Add(user);
+            await _context.SaveChangesAsync();
+
+            var initialCard = new Card
+            {
+                UserID = user.Id,
+                UID = Guid.NewGuid().ToString().Substring(0, 8).ToUpper(),
+                Balance = 0,
+                State = "Active"
+            };
+
+            var initialPoints = new Point
+            {
+                UserID = user.Id,
+                Points = 0
+            };
+
+            _context.Cards.Add(initialCard);
+            _context.Points.Add(initialPoints);
+
             await _context.SaveChangesAsync();
 
             return CreatedAtAction("GetUser", new { id = user.Id }, user);

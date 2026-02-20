@@ -9,7 +9,7 @@ namespace Api.Models
         // ID del Usuario que es dueño de la tarjeta (si está asociada a una cuenta)
         [Key]
         [ForeignKey("User")]
-        public int? UserID { get; set; }
+        public int UserID { get; set; }
         public User? User { get; set; }
 
         // El número o UID que se usa al tocar el validador (NFC/QR)
