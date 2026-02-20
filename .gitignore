@@ -5,5 +5,5 @@
 /.vs
 /Api/bin/Debug/net10.0
 /Api/obj
-appsetings.json
+appsettings.json
 appsettings.Development.json
