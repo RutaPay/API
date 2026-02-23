@@ -8,7 +8,7 @@ namespace Api.Models
         // ID del Usuario
         [Key]
         [ForeignKey("User")]
-        public int UserID { get; set; }
+        public string UserID { get; set; }
         public User? User { get; set; }
 
         // Cantidad de puntos acumulados por el usuario

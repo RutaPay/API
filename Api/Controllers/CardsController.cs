@@ -30,7 +30,7 @@ namespace Api.Controllers
 
         // GET: api/Cards/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<Card>> GetCard(int id)
+        public async Task<ActionResult<Card>> GetCard(string id)
         {
             var card = await _context.Cards.FindAsync(id);
 
@@ -45,7 +45,7 @@ namespace Api.Controllers
         // PUT: api/Cards/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutCard(int id, Card card)
+        public async Task<IActionResult> PutCard(string id, Card card)
         {
             if (id != card.UserID)
             {
@@ -100,7 +100,7 @@ namespace Api.Controllers
 
         // DELETE: api/Cards/5
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteCard(int id)
+        public async Task<IActionResult> DeleteCard(string id)
         {
             var card = await _context.Cards.FindAsync(id);
             if (card == null)
@@ -114,7 +114,7 @@ namespace Api.Controllers
             return NoContent();
         }
 
-        private bool CardExists(int id)
+        private bool CardExists(string id)
         {
             return _context.Cards.Any(e => e.UserID == id);
         }

@@ -30,7 +30,7 @@ namespace Api.Controllers
 
         // GET: api/Points/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<Point>> GetPoint(int? id)
+        public async Task<ActionResult<Point>> GetPoint(string id)
         {
             var point = await _context.Points.FindAsync(id);
 
@@ -45,7 +45,7 @@ namespace Api.Controllers
         // PUT: api/Points/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutPoint(int? id, Point point)
+        public async Task<IActionResult> PutPoint(string id, Point point)
         {
             if (id != point.UserID)
             {
@@ -100,7 +100,7 @@ namespace Api.Controllers
 
         // DELETE: api/Points/5
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeletePoint(int? id)
+        public async Task<IActionResult> DeletePoint(string id)
         {
             var point = await _context.Points.FindAsync(id);
             if (point == null)
@@ -114,7 +114,7 @@ namespace Api.Controllers
             return NoContent();
         }
 
-        private bool PointExists(int? id)
+        private bool PointExists(string id)
         {
             return _context.Points.Any(e => e.UserID == id);
         }

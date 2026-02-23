@@ -5,7 +5,7 @@ namespace Api.Models
     public class User : IdentityUser
     {
         // Identificador único para la base de datos (clave primaria)
-        public int Id { get; set; }
+        //public int Id { get; set; }
 
         // Nombre completo del usuario
         public string FullName { get; set; } = String.Empty;
