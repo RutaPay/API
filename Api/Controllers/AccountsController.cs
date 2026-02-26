@@ -1,5 +1,6 @@
 ﻿using Api.Data;
 using Api.Dtos.User;
+using Api.Interfaces;
 using Api.Models;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
@@ -12,10 +13,14 @@ namespace Api.Controllers
     public class AccountsController : ControllerBase
     {
         private readonly UserManager<User> _userManager;
+        private readonly ITokenService _tokenService;
+        private readonly SignInManager<User> _signInManager;
 
-        public AccountsController(UserManager<User> userManager)
+        public AccountsController(UserManager<User> userManager, ITokenService tokenService, SignInManager<User> signInManager)
         {
             _userManager = userManager;
+            _tokenService = tokenService;
+            _signInManager = signInManager;
         }
 
         // GET: api/account
@@ -32,7 +37,30 @@ namespace Api.Controllers
             return "value";
         }
 
-        // POST api/account
+        // POST api/account/login
+        [HttpPost("login")]
+        public async Task<ActionResult<User>> Login(LoginDto loginDto)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var user = await _userManager.FindByEmailAsync(loginDto.Email);
+            if (user == null) return Unauthorized("Invalid Email");
+
+            var result = await _signInManager.CheckPasswordSignInAsync(user, loginDto.Password, false);
+
+            if (!result.Succeeded) return Unauthorized("Invalid Password");
+
+            return Ok(new NewUserDto
+            {
+                    UserName = user.UserName,
+                    Email = user.Email,
+                    PhoneNumber = user.PhoneNumber,
+                    Token = _tokenService.CreateToken(user)
+            });
+        }
+
+        // POST api/account/register
         [HttpPost("register")]
         public async Task<ActionResult<User>> Register([FromBody] RegisterDto registerDto)
         {
@@ -43,6 +71,7 @@ namespace Api.Controllers
 
                 var user = new User
                 {
+                    UserName = registerDto.FullName,
                     FullName = registerDto.FullName,
                     LastNames = registerDto.LastNames,
                     Email = registerDto.Email,
@@ -56,7 +85,13 @@ namespace Api.Controllers
                     var roleResult = await _userManager.AddToRoleAsync(user, "User");
                     if (roleResult.Succeeded)
                     {
-                        return Created();
+                        return StatusCode(201, new NewUserDto
+                        {
+                            UserName = user.UserName,
+                            Email = user.Email,
+                            PhoneNumber = user.PhoneNumber,
+                            Token = _tokenService.CreateToken(user)
+                        });
                     } else
                     {
                         return BadRequest(roleResult.Errors);
