@@ -13,11 +13,12 @@ var localCORS = "_localCORS";
 
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy(name: localCORS, builder =>
+    options.AddPolicy(name: localCORS, policy =>
     {
-        builder.WithOrigins("http://localhost:5173") // URL con puertos Vite/Vue
+        policy.WithOrigins("http://localhost:5173") // URL con puertos Vite/Vue
                .AllowAnyMethod()
-               .AllowAnyHeader();
+               .AllowAnyHeader()
+               .AllowCredentials();
     });
 });
 
@@ -34,7 +35,7 @@ builder.Services.AddDbContext<ApplicationDBContext>(options =>
 builder.Services.AddIdentity<User, IdentityRole>(options =>
 {
     options.User.RequireUniqueEmail = true;
-    options.SignIn.RequireConfirmedEmail = true;
+    //options.SignIn.RequireConfirmedEmail = true;
     options.Password.RequireDigit = true;
     options.Password.RequireLowercase = true;
     options.Password.RequireUppercase = true;
