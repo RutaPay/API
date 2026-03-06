@@ -5,6 +5,7 @@ using Api.Models;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace Api.Controllers
 {
@@ -15,12 +16,14 @@ namespace Api.Controllers
         private readonly UserManager<User> _userManager;
         private readonly ITokenService _tokenService;
         private readonly SignInManager<User> _signInManager;
+        private readonly ILookupNormalizer _keyNormalizer;
 
-        public AccountsController(UserManager<User> userManager, ITokenService tokenService, SignInManager<User> signInManager)
+        public AccountsController(UserManager<User> userManager, ITokenService tokenService, SignInManager<User> signInManager, ILookupNormalizer keyNormalizer)
         {
             _userManager = userManager;
             _tokenService = tokenService;
             _signInManager = signInManager;
+            _keyNormalizer = keyNormalizer;
         }
 
         // GET: api/account
@@ -44,12 +47,22 @@ namespace Api.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            var user = await _userManager.FindByEmailAsync(loginDto.Email);
+            var normalizedEmail = _keyNormalizer.NormalizeEmail(loginDto.Email);
+            var user = await _userManager.Users
+                .Include(u => u.Card)
+                .Include(u => u.Point)
+                .FirstOrDefaultAsync(x => x.NormalizedEmail == normalizedEmail);
             if (user == null) return Unauthorized("Invalid Email");
 
             var result = await _signInManager.CheckPasswordSignInAsync(user, loginDto.Password, false);
 
-            if (!result.Succeeded) return Unauthorized("Invalid Password");
+            if (!result.Succeeded)
+            {
+                if (result.IsLockedOut) return Unauthorized("Account Locked");
+                if (result.IsNotAllowed) return Unauthorized("Email not confirmed or login not allowed");
+
+                return Unauthorized("Invalid Password");
+            }
 
             return Ok(new NewUserDto
             {
@@ -76,6 +89,16 @@ namespace Api.Controllers
                     LastNames = registerDto.LastNames,
                     Email = registerDto.Email,
                     PhoneNumber = registerDto.PhoneNumber,
+                    Card = new Card
+                    {
+                        UID = Guid.NewGuid().ToString(),
+                        Balance = 0,
+                        State = "Active"
+                    },
+                    Point = new Point
+                    {
+                        Points = 0
+                    }
                 };
 
                 var createUserResult = await _userManager.CreateAsync(user, registerDto.Password);
