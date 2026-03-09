@@ -26,12 +26,12 @@ namespace Api.Controllers
             _keyNormalizer = keyNormalizer;
         }
 
-        // GET: api/account
+        /* GET: api/account
         [HttpGet]
         public IEnumerable<string> Get()
         {
             return new string[] { "value1", "value2" };
-        }
+        }*/
 
         // GET api/account/5
         [HttpGet("{id}")]
