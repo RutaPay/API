@@ -2,10 +2,11 @@
 using Api.Dtos.User;
 using Api.Interfaces;
 using Api.Models;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 
 namespace Api.Controllers
 {
@@ -26,12 +27,31 @@ namespace Api.Controllers
             _keyNormalizer = keyNormalizer;
         }
 
-        /* GET: api/account
+        // GET: api/account
         [HttpGet]
-        public IEnumerable<string> Get()
+        public async Task<ActionResult> GetCurrentUser()
         {
-            return new string[] { "value1", "value2" };
-        }*/
+            var userName = User.FindFirstValue(ClaimTypes.NameIdentifier)
+                   ?? User.FindFirstValue(JwtRegisteredClaimNames.PreferredUsername);
+            var fullName = User.FindFirstValue(ClaimTypes.GivenName);
+            var lastNames = User.FindFirstValue(JwtRegisteredClaimNames.FamilyName);
+            var email = User.FindFirstValue(ClaimTypes.Email);
+            var phoneNumber = User.FindFirstValue(JwtRegisteredClaimNames.PhoneNumber);
+            var cardId = User.FindFirstValue("Card");
+            var points = User.FindFirstValue("Points");
+
+            return Ok(new 
+            {
+                UserName = userName,
+                FullName = fullName,
+                LastNames = lastNames,
+                Email = email,
+                PhoneNumber = phoneNumber,
+                CardId = cardId,
+                Points = points,
+                IsAuthenticated = true
+            });
+        }
 
         // GET api/account/5
         [HttpGet("{id}")]
@@ -64,12 +84,22 @@ namespace Api.Controllers
                 return Unauthorized("Invalid Password");
             }
 
+            var token = _tokenService.CreateToken(user);
+
+            Response.Cookies.Append("token", token, new CookieOptions
+            {
+                HttpOnly = true,
+                //Secure = true,   // Requires HTTPS
+                SameSite = SameSiteMode.Lax,
+                Expires = DateTime.UtcNow.AddDays(7)
+            });
+
             return Ok(new NewUserDto
             {
                     UserName = user.UserName,
                     Email = user.Email,
                     PhoneNumber = user.PhoneNumber,
-                    Token = _tokenService.CreateToken(user)
+                    //Token = _tokenService.CreateToken(user)
             });
         }
 
@@ -113,7 +143,7 @@ namespace Api.Controllers
                             UserName = user.UserName,
                             Email = user.Email,
                             PhoneNumber = user.PhoneNumber,
-                            Token = _tokenService.CreateToken(user)
+                            //Token = _tokenService.CreateToken(user)
                         });
                     } else
                     {
@@ -128,6 +158,13 @@ namespace Api.Controllers
             {
                 return Problem(e.ToString());
             }
+        }
+
+        [HttpPost("logout")]
+        public ActionResult Logout()
+        {
+            Response.Cookies.Delete("token");
+            return Ok();
         }
 
         // PUT api/account/5
