@@ -23,12 +23,12 @@ namespace Api.Controllers
             _context = context;
         }
 
-        // GET: api/Cards
+        /* GET: api/Cards
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Card>>> GetCards()
         {
             return await _context.Cards.ToListAsync();
-        }
+        }*/
 
         // GET: api/Cards/5
         [HttpGet("{id}")]

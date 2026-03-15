@@ -160,6 +160,7 @@ namespace Api.Controllers
             }
         }
 
+        // POST api/account/logout
         [HttpPost("logout")]
         public ActionResult Logout()
         {

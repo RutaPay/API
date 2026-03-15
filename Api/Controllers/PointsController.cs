@@ -23,16 +23,16 @@ namespace Api.Controllers
             _context = context;
         }
 
-        // GET: api/Points
+        /* GET: api/Points
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Point>>> GetPoints()
         {
             return await _context.Points.ToListAsync();
-        }
+        }*/
 
         // GET: api/Points/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<Point>> GetPoint(string id)
+        public async Task<ActionResult<int>> GetPoints(string id)
         {
             var point = await _context.Points.FindAsync(id);
 
@@ -41,7 +41,7 @@ namespace Api.Controllers
                 return NotFound();
             }
 
-            return point;
+            return point.Points;
         }
 
         // PUT: api/Points/5
