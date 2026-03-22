@@ -2,6 +2,7 @@
 using Api.Dtos.User;
 using Api.Interfaces;
 using Api.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -29,6 +30,7 @@ namespace Api.Controllers
 
         // GET: api/account
         [HttpGet]
+        [Authorize]
         public async Task<ActionResult> GetCurrentUser()
         {
             var userName = User.FindFirstValue(ClaimTypes.NameIdentifier)
@@ -39,6 +41,7 @@ namespace Api.Controllers
             var phoneNumber = User.FindFirstValue(JwtRegisteredClaimNames.PhoneNumber);
             var cardId = User.FindFirstValue("Card");
             var points = User.FindFirstValue("Points");
+            var createdOn = User.FindFirstValue("CreatedOn");
 
             return Ok(new 
             {
@@ -49,6 +52,7 @@ namespace Api.Controllers
                 PhoneNumber = phoneNumber,
                 CardId = cardId,
                 Points = points,
+                CreatedOn = createdOn,
                 IsAuthenticated = true
             });
         }
@@ -89,8 +93,8 @@ namespace Api.Controllers
             Response.Cookies.Append("token", token, new CookieOptions
             {
                 HttpOnly = true,
-                //Secure = true,   // Requires HTTPS
-                SameSite = SameSiteMode.Lax,
+                Secure = true,   // Requires HTTPS
+                SameSite = SameSiteMode.None,
                 Expires = DateTime.UtcNow.AddDays(7)
             });
 
@@ -111,6 +115,12 @@ namespace Api.Controllers
             {
                 if(!ModelState.IsValid)
                     return BadRequest(ModelState);
+
+                var existingEmail = await _userManager.FindByEmailAsync(registerDto.Email);
+                if (existingEmail != null)
+                {
+                    return BadRequest("Email already exists.");
+                }
 
                 var user = new User
                 {

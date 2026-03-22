@@ -26,7 +26,8 @@ namespace Api.Service
                 new Claim(JwtRegisteredClaimNames.Email, user.Email),
                 new Claim(JwtRegisteredClaimNames.PhoneNumber, user.PhoneNumber),
                 new Claim("Card", user.Card.UID),
-                new Claim("Points", user.Point.Points.ToString())
+                new Claim("Points", user.Point.Points.ToString()),
+                new Claim("CreatedOn", user.CreatedOn.ToString("d"))
             };
 
             var creds = new SigningCredentials(_key, SecurityAlgorithms.HmacSha512Signature);
