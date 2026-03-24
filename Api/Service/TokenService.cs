@@ -25,7 +25,8 @@ namespace Api.Service
                 new Claim(JwtRegisteredClaimNames.FamilyName, user.LastNames),
                 new Claim(JwtRegisteredClaimNames.Email, user.Email),
                 new Claim(JwtRegisteredClaimNames.PhoneNumber, user.PhoneNumber),
-                new Claim("Card", user.Card.UID),
+                new Claim("CardID", user.Card.UID),
+                new Claim("CardBalance", user.Card.Balance.ToString()),
                 new Claim("Points", user.Point.Points.ToString()),
                 new Claim("CreatedOn", user.CreatedOn.ToString("d"))
             };

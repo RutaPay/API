@@ -1,13 +1,9 @@
 ﻿using Api.Data;
+using Api.Dtos.Card;
 using Api.Models;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace Api.Controllers
 {
@@ -44,38 +40,32 @@ namespace Api.Controllers
             return card;
         }
 
-        // PUT: api/Cards/5
+        // PUT: api/Cards/5/AddBalance
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutCard(string id, Card card)
+        [HttpPut]
+        [Route("{id}/UpdateBalance")]
+        public async Task<ActionResult> UpdateBalance([FromRoute] string id, [FromBody] BalanceChangeDto balanceChangeDto)
         {
-            if (id != card.UserID)
-            {
-                return BadRequest();
-            }
+            var cardModel = await _context.Cards.FindAsync(id);
 
-            _context.Entry(card).State = EntityState.Modified;
+            if (cardModel == null) return NotFound();
+
+            cardModel.Balance = balanceChangeDto.Balance;
 
             try
             {
                 await _context.SaveChangesAsync();
+
+                return Ok();
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!CardExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
+                throw;
             }
 
-            return NoContent();
         }
 
-        // POST: api/Cards
+        /* POST: api/Cards
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
         public async Task<ActionResult<Card>> PostCard(Card card)
@@ -98,9 +88,9 @@ namespace Api.Controllers
             }
 
             return CreatedAtAction("GetCard", new { id = card.UserID }, card);
-        }
+        }*/
 
-        // DELETE: api/Cards/5
+        /* DELETE: api/Cards/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteCard(string id)
         {
@@ -114,7 +104,7 @@ namespace Api.Controllers
             await _context.SaveChangesAsync();
 
             return NoContent();
-        }
+        }*/
 
         private bool CardExists(string id)
         {

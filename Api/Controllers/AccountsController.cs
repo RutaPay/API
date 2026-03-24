@@ -39,7 +39,8 @@ namespace Api.Controllers
             var lastNames = User.FindFirstValue(JwtRegisteredClaimNames.FamilyName);
             var email = User.FindFirstValue(ClaimTypes.Email);
             var phoneNumber = User.FindFirstValue(JwtRegisteredClaimNames.PhoneNumber);
-            var cardId = User.FindFirstValue("Card");
+            var cardId = User.FindFirstValue("CardID");
+            var cardBalance = User.FindFirstValue("CardBalance");
             var points = User.FindFirstValue("Points");
             var createdOn = User.FindFirstValue("CreatedOn");
 
@@ -51,6 +52,7 @@ namespace Api.Controllers
                 Email = email,
                 PhoneNumber = phoneNumber,
                 CardId = cardId,
+                CardBalance = cardBalance,
                 Points = points,
                 CreatedOn = createdOn,
                 IsAuthenticated = true
@@ -172,6 +174,7 @@ namespace Api.Controllers
 
         // POST api/account/logout
         [HttpPost("logout")]
+        [Authorize]
         public ActionResult Logout()
         {
             Response.Cookies.Delete("token");
