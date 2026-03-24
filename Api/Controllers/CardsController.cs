@@ -40,7 +40,7 @@ namespace Api.Controllers
             return card;
         }
 
-        // PUT: api/Cards/5/AddBalance
+        // PUT: api/Cards/5/UpdateBalance
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut]
         [Route("{id}/UpdateBalance")]

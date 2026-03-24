@@ -177,7 +177,12 @@ namespace Api.Controllers
         [Authorize]
         public ActionResult Logout()
         {
-            Response.Cookies.Delete("token");
+            Response.Cookies.Delete("token", new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = true,
+                SameSite = SameSiteMode.None,
+            });
             return Ok();
         }
 
