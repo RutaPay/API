@@ -43,6 +43,7 @@ namespace Api.Controllers
             var cardBalance = User.FindFirstValue("CardBalance");
             var points = User.FindFirstValue("Points");
             var createdOn = User.FindFirstValue("CreatedOn");
+            var accType = _userManager.GetRolesAsync(await _userManager.FindByNameAsync(userName)).Result.FirstOrDefault();
 
             return Ok(new 
             {
@@ -55,6 +56,7 @@ namespace Api.Controllers
                 CardBalance = cardBalance,
                 Points = points,
                 CreatedOn = createdOn,
+                AccountType = accType,
                 IsAuthenticated = true
             });
         }
@@ -183,6 +185,16 @@ namespace Api.Controllers
                 Secure = true,
                 SameSite = SameSiteMode.None,
             });
+            return Ok();
+        }
+
+        // POST api/account/addrole
+        [HttpPost("addrole")]
+        [Authorize]
+        public async Task<ActionResult> AddRole(RoleChangeDto roleChange)
+        {
+            var roles = _userManager.GetRolesAsync;
+
             return Ok();
         }
 

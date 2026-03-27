@@ -32,6 +32,34 @@ namespace Api.Data
                     Name = "User",
                     NormalizedName = "USER",
                     ConcurrencyStamp = "2"
+                },
+                new IdentityRole
+                {
+                    Id = "Student",
+                    Name = "Student",
+                    NormalizedName = "STUDENT",
+                    ConcurrencyStamp = "3"
+                },
+                new IdentityRole
+                {
+                    Id = "Health",
+                    Name = "Health",
+                    NormalizedName = "HEALTH",
+                    ConcurrencyStamp = "4"
+                },
+                new IdentityRole
+                {
+                    Id = "Adult",
+                    Name = "Adult",
+                    NormalizedName = "ADULT",
+                    ConcurrencyStamp = "5"
+                },
+                new IdentityRole
+                {
+                    Id = "Driver",
+                    Name = "Driver",
+                    NormalizedName = "DRIVER",
+                    ConcurrencyStamp = "6"
                 }
             };
             builder.Entity<IdentityRole>().HasData(role);
