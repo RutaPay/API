@@ -25,11 +25,47 @@ namespace Api.Service
                 new Claim(JwtRegisteredClaimNames.FamilyName, user.LastNames),
                 new Claim(JwtRegisteredClaimNames.Email, user.Email),
                 new Claim(JwtRegisteredClaimNames.PhoneNumber, user.PhoneNumber),
-                new Claim("CardID", user.Card.UID),
+                new Claim("CardUID", user.Card.UID),
                 new Claim("CardBalance", user.Card.Balance.ToString()),
                 new Claim("Points", user.Point.Points.ToString()),
                 new Claim("CreatedOn", user.CreatedOn.ToString("d"))
             };
+
+            var creds = new SigningCredentials(_key, SecurityAlgorithms.HmacSha512Signature);
+            var tokenDescriptor = new SecurityTokenDescriptor
+            {
+                Subject = new ClaimsIdentity(claims),
+                Expires = DateTime.UtcNow.AddDays(7),
+                SigningCredentials = creds,
+                Issuer = _config["Jwt:Issuer"],
+                Audience = _config["Jwt:Audience"]
+            };
+
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var token = tokenHandler.CreateToken(tokenDescriptor);
+
+            return tokenHandler.WriteToken(token);
+        }
+
+        public string CreateToken(User user, IList<string> roles)
+        {
+            var claims = new List<Claim>
+            {
+                new Claim(JwtRegisteredClaimNames.PreferredUsername, user.UserName),
+                new Claim(JwtRegisteredClaimNames.GivenName, user.FullName),
+                new Claim(JwtRegisteredClaimNames.FamilyName, user.LastNames),
+                new Claim(JwtRegisteredClaimNames.Email, user.Email),
+                new Claim(JwtRegisteredClaimNames.PhoneNumber, user.PhoneNumber),
+                new Claim("CardUID", user.Card.UID),
+                new Claim("CardBalance", user.Card.Balance.ToString()),
+                new Claim("Points", user.Point.Points.ToString()),
+                new Claim("CreatedOn", user.CreatedOn.ToString("d"))
+            };
+
+            foreach (var role in roles)
+            {
+                claims.Add(new Claim(ClaimTypes.Role, role));
+            }
 
             var creds = new SigningCredentials(_key, SecurityAlgorithms.HmacSha512Signature);
             var tokenDescriptor = new SecurityTokenDescriptor

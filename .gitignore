@@ -11,3 +11,4 @@ appsettings.Development.json
 /Api/appsettings.Development.json
 /Api/bin/Release/net10.0
 /Api/Properties/PublishProfiles/FolderProfile.pubxml.user
+/Api/Service/MailService.cs

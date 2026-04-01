@@ -19,13 +19,15 @@ namespace Api.Controllers
         private readonly ITokenService _tokenService;
         private readonly SignInManager<User> _signInManager;
         private readonly ILookupNormalizer _keyNormalizer;
+        private readonly ApplicationDBContext _context;
 
-        public AccountsController(UserManager<User> userManager, ITokenService tokenService, SignInManager<User> signInManager, ILookupNormalizer keyNormalizer)
+        public AccountsController(UserManager<User> userManager, ITokenService tokenService, SignInManager<User> signInManager, ILookupNormalizer keyNormalizer, ApplicationDBContext dBContext)
         {
             _userManager = userManager;
             _tokenService = tokenService;
             _signInManager = signInManager;
             _keyNormalizer = keyNormalizer;
+            _context = dBContext;
         }
 
         // GET: api/account
@@ -34,12 +36,12 @@ namespace Api.Controllers
         public async Task<ActionResult> GetCurrentUser()
         {
             var userName = User.FindFirstValue(ClaimTypes.NameIdentifier)
-                   ?? User.FindFirstValue(JwtRegisteredClaimNames.PreferredUsername);
+                ?? User.FindFirstValue(JwtRegisteredClaimNames.PreferredUsername);
             var fullName = User.FindFirstValue(ClaimTypes.GivenName);
-            var lastNames = User.FindFirstValue(JwtRegisteredClaimNames.FamilyName);
+            var lastNames = User.FindFirstValue(ClaimTypes.Surname);
             var email = User.FindFirstValue(ClaimTypes.Email);
             var phoneNumber = User.FindFirstValue(JwtRegisteredClaimNames.PhoneNumber);
-            var cardId = User.FindFirstValue("CardID");
+            var cardUID = User.FindFirstValue("CardUID");
             var cardBalance = User.FindFirstValue("CardBalance");
             var points = User.FindFirstValue("Points");
             var createdOn = User.FindFirstValue("CreatedOn");
@@ -52,20 +54,13 @@ namespace Api.Controllers
                 LastNames = lastNames,
                 Email = email,
                 PhoneNumber = phoneNumber,
-                CardId = cardId,
+                CardUID = cardUID,
                 CardBalance = cardBalance,
                 Points = points,
                 CreatedOn = createdOn,
                 AccountType = accType,
                 IsAuthenticated = true
             });
-        }
-
-        // GET api/account/5
-        [HttpGet("{id}")]
-        public string Get(int id)
-        {
-            return "value";
         }
 
         // POST api/account/login
@@ -92,7 +87,9 @@ namespace Api.Controllers
                 return Unauthorized("Invalid Password");
             }
 
-            var token = _tokenService.CreateToken(user);
+            var roles = await _userManager.GetRolesAsync(user);
+
+            var token = _tokenService.CreateToken(user, roles);
 
             Response.Cookies.Append("token", token, new CookieOptions
             {
@@ -188,9 +185,47 @@ namespace Api.Controllers
             return Ok();
         }
 
-        // POST api/account/addrole
-        [HttpPost("addrole")]
-        [Authorize]
+        //GET api/account/all
+        [HttpGet("all")]
+        [Authorize(Roles = "Admin")]
+        public async Task<ActionResult<IEnumerable<UserForAdminDto>>> GetAllUsers()
+        {
+            var users = await (
+                from user in _context.Users
+                join userRole in _context.UserRoles on user.Id equals userRole.UserId
+                join role in _context.Roles on userRole.RoleId equals role.Id
+                select new UserForAdminDto
+                {
+                    Id = user.Id,
+                    UserName = user.UserName,
+                    Email = user.Email,
+                    PhoneNumber = user.PhoneNumber,
+                    FullName = user.FullName,
+                    LastNames = user.LastNames,
+                    AccountType = role.Name,
+                    CreatedOn = user.CreatedOn,
+                    CardId = user.Card.UID,
+                    CardBalance = user.Card.Balance,
+                    CardStatus = user.Card.State,
+                    Points = user.Point.Points,
+                }).ToListAsync();
+
+            return Ok(users);
+        }
+
+        // GET api/account/5
+        [HttpGet("{id}")]
+        [Authorize(Roles = "Admin")]
+        public async Task<ActionResult> GetUserById([FromRoute]string id)
+        {
+            var user = _userManager.FindByIdAsync(id);
+            return Ok(user);
+        }
+
+        // POST api/account/5/addrole
+        [HttpPost]
+        [Route("{id}/updaterole")]
+        [Authorize(Roles = "Admin")]
         public async Task<ActionResult> AddRole(RoleChangeDto roleChange)
         {
             var roles = _userManager.GetRolesAsync;
@@ -200,6 +235,7 @@ namespace Api.Controllers
 
         // PUT api/account/5
         [HttpPut("{id}")]
+        [Authorize(Roles = "Admin")]
         public void Put(int id, [FromBody] string value)
         {
         }
