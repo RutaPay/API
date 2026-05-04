@@ -1,9 +1,12 @@
 ﻿using Api.Data;
 using Api.Dtos.Card;
+using Api.Interfaces;
 using Api.Models;
+using Api.Repository;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 
 namespace Api.Controllers
 {
@@ -12,10 +15,12 @@ namespace Api.Controllers
     [Authorize]
     public class CardsController : ControllerBase
     {
+        private readonly IUserRepository _userRepository;
         private readonly ApplicationDBContext _context;
 
-        public CardsController(ApplicationDBContext context)
+        public CardsController(IUserRepository userRepository, ApplicationDBContext context)
         {
+            _userRepository = userRepository;
             _context = context;
         }
 
@@ -40,17 +45,36 @@ namespace Api.Controllers
             return card;
         }
 
-        // PUT: api/Cards/5/UpdateBalance
+        // POST: api/Cards/UpdateBalance
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPut]
-        [Route("{id}/UpdateBalance")]
-        public async Task<ActionResult> UpdateBalance([FromRoute] string id, [FromBody] BalanceChangeDto balanceChangeDto)
+        [HttpPost]
+        [Route("UpdateBalance")]
+        [Authorize]
+        public async Task<ActionResult> UpdateBalance([FromBody] BalanceChangeDto balanceChangeDto)
         {
-            var cardModel = await _context.Cards.FindAsync(id);
+            var email = User.FindFirstValue(ClaimTypes.Email);
+            var user = await _userRepository.GetUserByEmailAsync(email);
+
+            var cardModel = await _context.Cards.FindAsync(user.Id);
 
             if (cardModel == null) return NotFound();
 
-            cardModel.Balance = balanceChangeDto.Balance;
+            if(balanceChangeDto.OppType == "recharge")
+            {
+                cardModel.Balance += balanceChangeDto.Balance;
+            }
+            else if (balanceChangeDto.OppType == "payment")
+            {
+                if (cardModel.Balance < balanceChangeDto.Balance)
+                {
+                    return BadRequest("Insufficient balance");
+                }
+                cardModel.Balance -= balanceChangeDto.Balance;
+            }
+            else
+            {
+                return BadRequest("Invalid operation type");
+            }
 
             try
             {

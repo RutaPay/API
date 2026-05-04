@@ -3,5 +3,7 @@
     public class BalanceChangeDto
     {
         public decimal Balance { get; set; }
+
+        public string OppType { get; set; }
     }
 }

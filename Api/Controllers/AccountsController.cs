@@ -18,15 +18,15 @@ namespace Api.Controllers
         private readonly UserManager<User> _userManager;
         private readonly ITokenService _tokenService;
         private readonly SignInManager<User> _signInManager;
-        private readonly ILookupNormalizer _keyNormalizer;
+        private readonly IUserRepository _userRepository;
         private readonly ApplicationDBContext _context;
 
-        public AccountsController(UserManager<User> userManager, ITokenService tokenService, SignInManager<User> signInManager, ILookupNormalizer keyNormalizer, ApplicationDBContext dBContext)
+        public AccountsController(UserManager<User> userManager, ITokenService tokenService, SignInManager<User> signInManager, IUserRepository userRepository, ApplicationDBContext dBContext)
         {
             _userManager = userManager;
             _tokenService = tokenService;
             _signInManager = signInManager;
-            _keyNormalizer = keyNormalizer;
+            _userRepository = userRepository;
             _context = dBContext;
         }
 
@@ -42,8 +42,11 @@ namespace Api.Controllers
             var email = User.FindFirstValue(ClaimTypes.Email);
             var phoneNumber = User.FindFirstValue(JwtRegisteredClaimNames.PhoneNumber);
             var cardUID = User.FindFirstValue("CardUID");
-            var cardBalance = User.FindFirstValue("CardBalance");
-            var points = User.FindFirstValue("Points");
+
+            var user = await _userRepository.GetUserByEmailAsync(email);
+
+            var cardBalance = user.Card.Balance.ToString("F2");
+            var points = user.Point.Points;
             var createdOn = User.FindFirstValue("CreatedOn");
             var accType = _userManager.GetRolesAsync(await _userManager.FindByNameAsync(userName)).Result.FirstOrDefault();
 
@@ -70,11 +73,7 @@ namespace Api.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            var normalizedEmail = _keyNormalizer.NormalizeEmail(loginDto.Email);
-            var user = await _userManager.Users
-                .Include(u => u.Card)
-                .Include(u => u.Point)
-                .FirstOrDefaultAsync(x => x.NormalizedEmail == normalizedEmail);
+            var user = await _userRepository.GetUserByEmailAsync(loginDto.Email);
             if (user == null) return Unauthorized("Invalid Email");
 
             var result = await _signInManager.CheckPasswordSignInAsync(user, loginDto.Password, false);
