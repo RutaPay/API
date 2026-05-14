@@ -6,5 +6,7 @@ namespace Api.Interfaces
     {
         string CreateToken(User user);
         string CreateToken(User user, IList<string> roles);
+        string CreatePaymentToken(decimal amount, string route);
+        bool ValidatePaymentToken(string token);
     }
 }

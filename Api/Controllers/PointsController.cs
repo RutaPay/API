@@ -1,13 +1,8 @@
 ﻿using Api.Data;
 using Api.Models;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace Api.Controllers
 {
@@ -76,7 +71,7 @@ namespace Api.Controllers
         }
 
         // POST: api/Points
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+        /* To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
         public async Task<ActionResult<Point>> PostPoint(Point point)
         {
@@ -98,9 +93,9 @@ namespace Api.Controllers
             }
 
             return CreatedAtAction("GetPoint", new { id = point.UserID }, point);
-        }
+        }*/
 
-        // DELETE: api/Points/5
+        /* DELETE: api/Points/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeletePoint(string id)
         {
@@ -114,7 +109,7 @@ namespace Api.Controllers
             await _context.SaveChangesAsync();
 
             return NoContent();
-        }
+        }*/
 
         private bool PointExists(string id)
         {
