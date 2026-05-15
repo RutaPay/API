@@ -24,18 +24,27 @@ namespace Api.Controllers
         // POST: api/Payments/generate
         [HttpPost("{generate}")]
         public async Task<ActionResult> generatePaymentCode(decimal amount, string route) {
-            var token = _tokenService.CreatePaymentToken(amount, route);
+            var transactionId = Guid.NewGuid().ToString();
+            var token = _tokenService.CreatePaymentToken(amount, route, transactionId);
             return Ok(new {
-                Token = token
+                Token = token,
             });
         }
 
         // POST: api/Payments/validate
         [HttpPost("{validate}")]
-        public async Task<ActionResult> validatePaymentCode(string token)
+        public async Task<ActionResult> validatePaymentCode(string token, string srGroupId)
         {
-            var isValid = _tokenService.ValidatePaymentToken(token);
-            return isValid ? Ok(new { Status = "Success" }) : BadRequest(new { Status = "Invalid" });
+            var isValid = await _tokenService.ValidatePaymentToken(token);
+
+            if(isValid)
+            {
+                await Task.Delay(2000);
+                return Ok(new { Status = "Valid" });
+            } else
+            {
+                return BadRequest(new { Status = "Invalid" });
+            }
         }
     }
 }

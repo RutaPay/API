@@ -1,5 +1,6 @@
 using Api.Data;
 using Api.Interfaces;
+using Api.Hubs;
 using Api.Models;
 using Api.Repository;
 using Api.Service;
@@ -20,6 +21,14 @@ builder.Services.AddCors(options =>
                .AllowAnyMethod()
                .AllowAnyHeader()
                .AllowCredentials();
+    });
+    options.AddPolicy("AllowAll", policy =>
+    {
+        policy
+            .SetIsOriginAllowed(origin => true)
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowCredentials();
     });
 });
 
@@ -78,6 +87,7 @@ builder.Services.AddAuthentication(options =>
 
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddSignalR();
 
 var app = builder.Build();
 
@@ -87,7 +97,7 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 
-app.UseCors(localCORS);
+app.UseCors("AllowAll");
 
 app.UseHttpsRedirection();
 
@@ -95,5 +105,6 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+app.MapHub<PaymentHub>("/Payments/paymentHub");
 
 app.Run();

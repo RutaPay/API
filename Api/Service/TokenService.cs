@@ -84,12 +84,14 @@ namespace Api.Service
             return tokenHandler.WriteToken(token);
         }
 
-        public string CreatePaymentToken(decimal amount, string route)
+        public string CreatePaymentToken(decimal amount, string route, string transactionId)
         {
+
             var claims = new List<Claim>
             {
                 new Claim("Amount", amount.ToString()),
-                new Claim("Route", route)
+                new Claim("Route", route),
+                new Claim("TransactionId", transactionId)
             };
             var creds = new SigningCredentials(_key, SecurityAlgorithms.HmacSha512Signature);
             var tokenDescriptor = new SecurityTokenDescriptor
@@ -107,7 +109,7 @@ namespace Api.Service
             return tokenHandler.WriteToken(token);
         }
 
-        public bool ValidatePaymentToken(string token)
+        public async Task<bool> ValidatePaymentToken(string token)
         {
             var tokenHandler = new JwtSecurityTokenHandler();
             try
