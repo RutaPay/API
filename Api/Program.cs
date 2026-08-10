@@ -22,14 +22,6 @@ builder.Services.AddCors(options =>
                .AllowAnyHeader()
                .AllowCredentials();
     });
-    options.AddPolicy("AllowAll", policy =>
-    {
-        policy
-            .SetIsOriginAllowed(origin => true)
-            .AllowAnyHeader()
-            .AllowAnyMethod()
-            .AllowCredentials();
-    });
 });
 
 // Add services to the container.
@@ -97,7 +89,7 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 
-app.UseCors("AllowAll");
+app.UseCors(localCORS);
 
 app.UseHttpsRedirection();
 
