@@ -1,4 +1,4 @@
-﻿using Api.Interfaces;
+using Api.Interfaces;
 using Api.Models;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
@@ -109,12 +109,36 @@ namespace Api.Service
             return tokenHandler.WriteToken(token);
         }
 
-        public async Task<bool> ValidatePaymentToken(string token)
+        public string CreateUserPaymentToken(string userId, string route, string transactionId)
+        {
+            var claims = new List<Claim>
+            {
+                new Claim(ClaimTypes.NameIdentifier, userId),
+                new Claim("Route", route ?? "Ruta General"),
+                new Claim("TransactionId", transactionId)
+            };
+            var creds = new SigningCredentials(_key, SecurityAlgorithms.HmacSha512Signature);
+            var tokenDescriptor = new SecurityTokenDescriptor
+            {
+                Subject = new ClaimsIdentity(claims),
+                Expires = DateTime.UtcNow.AddMinutes(5), // Tokens de pasaje válidos por 5 minutos
+                SigningCredentials = creds,
+                Issuer = _config["Jwt:Issuer"],
+                Audience = _config["Jwt:Audience"]
+            };
+
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var token = tokenHandler.CreateToken(tokenDescriptor);
+
+            return tokenHandler.WriteToken(token);
+        }
+
+        public ClaimsPrincipal? GetPrincipalFromPaymentToken(string token)
         {
             var tokenHandler = new JwtSecurityTokenHandler();
             try
             {
-                tokenHandler.ValidateToken(token, new TokenValidationParameters
+                var principal = tokenHandler.ValidateToken(token, new TokenValidationParameters
                 {
                     ValidateIssuer = true,
                     ValidIssuer = _config["Jwt:Issuer"],
@@ -125,12 +149,18 @@ namespace Api.Service
                     ValidateLifetime = true,
                     ClockSkew = TimeSpan.Zero
                 }, out _);
-                return true;
+                return principal;
             }
             catch
             {
-                return false;
+                return null;
             }
+        }
+
+        public async Task<bool> ValidatePaymentToken(string token)
+        {
+            await Task.CompletedTask;
+            return GetPrincipalFromPaymentToken(token) != null;
         }
 
         public void VerifyToken(string token)

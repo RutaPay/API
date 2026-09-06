@@ -1,4 +1,4 @@
-﻿using Api.Data;
+using Api.Data;
 using Api.Dtos.User;
 using Api.Interfaces;
 using Api.Models;
@@ -59,6 +59,7 @@ namespace Api.Controllers
                 PhoneNumber = phoneNumber,
                 CardUID = cardUID,
                 CardBalance = cardBalance,
+                CardStatus = user?.Card?.State ?? "Active",
                 Points = points,
                 CreatedOn = createdOn,
                 AccountType = accType,
@@ -215,34 +216,54 @@ namespace Api.Controllers
         // GET api/account/5
         [HttpGet("{id}")]
         [Authorize(Roles = "Admin")]
-        public async Task<ActionResult> GetUserById([FromRoute]string id)
+        public async Task<ActionResult> GetUserById([FromRoute] string id)
         {
-            var user = _userManager.FindByIdAsync(id);
-            return Ok(user);
+            var user = await _userManager.FindByIdAsync(id);
+            if (user == null) return NotFound("Usuario no encontrado.");
+            var roles = await _userManager.GetRolesAsync(user);
+            return Ok(new
+            {
+                user.Id,
+                user.UserName,
+                user.FullName,
+                user.LastNames,
+                user.Email,
+                user.PhoneNumber,
+                Roles = roles
+            });
         }
 
-        // POST api/account/5/addrole
-        [HttpPost]
-        [Route("{id}/updaterole")]
+        // POST api/account/{id}/updaterole
+        [HttpPost("{id}/updaterole")]
         [Authorize(Roles = "Admin")]
-        public async Task<ActionResult> AddRole(RoleChangeDto roleChange)
+        public async Task<ActionResult> AddRole([FromRoute] string id, [FromBody] RoleChangeDto roleChange)
         {
-            var roles = _userManager.GetRolesAsync;
+            var user = await _userManager.FindByIdAsync(id);
+            if (user == null) return NotFound("Usuario no encontrado.");
 
-            return Ok();
-        }
+            var currentRoles = await _userManager.GetRolesAsync(user);
+            await _userManager.RemoveFromRolesAsync(user, currentRoles);
 
-        // PUT api/account/5
-        [HttpPut("{id}")]
-        [Authorize(Roles = "Admin")]
-        public void Put(int id, [FromBody] string value)
-        {
+            var result = await _userManager.AddToRoleAsync(user, roleChange.RoleId);
+            if (result.Succeeded)
+            {
+                return Ok(new { Message = "Rol de usuario actualizado exitosamente.", Role = roleChange.RoleId });
+            }
+
+            return BadRequest(result.Errors);
         }
 
         // DELETE api/account/5
         [HttpDelete("{id}")]
-        public void Delete(int id)
+        [Authorize(Roles = "Admin")]
+        public async Task<ActionResult> DeleteUser([FromRoute] string id)
         {
+            var user = await _userManager.FindByIdAsync(id);
+            if (user == null) return NotFound();
+
+            var result = await _userManager.DeleteAsync(user);
+            if (result.Succeeded) return NoContent();
+            return BadRequest(result.Errors);
         }
     }
 }
