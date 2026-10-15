@@ -12,12 +12,28 @@ using Microsoft.IdentityModel.Tokens;
 var builder = WebApplication.CreateBuilder(args);
 
 var localCORS = "_localCORS";
+var productionCORS = "_productionCORS";
+var finalCORS = "_finalCORS";
 
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy(name: localCORS, policy =>
+    /*options.AddPolicy(name: localCORS, policy =>
     {
         policy.WithOrigins("http://localhost:5173") // URL con puertos Vite/Vue
+               .AllowAnyMethod()
+               .AllowAnyHeader()
+               .AllowCredentials();
+    });
+    options.AddPolicy(name: productionCORS, policy =>
+    {
+        policy.WithOrigins("https://rutapay.de5.net") // RutaPay Web
+               .AllowAnyMethod()
+               .AllowAnyHeader()
+               .AllowCredentials();
+    });*/
+    options.AddPolicy(name: finalCORS, policy =>
+    {
+        policy.WithOrigins("http://localhost:5173", "https://rutapay.de5.net") // Todo
                .AllowAnyMethod()
                .AllowAnyHeader()
                .AllowCredentials();
@@ -71,7 +87,11 @@ builder.Services.AddAuthentication(options =>
     {
         OnMessageReceived = context =>
         {
-            context.Token = context.Request.Cookies["token"];
+            var cookieToken = context.Request.Cookies["token"];
+            if (!string.IsNullOrEmpty(cookieToken))
+            {
+                context.Token = cookieToken;
+            }
             return Task.CompletedTask;
         }
     };
@@ -79,6 +99,8 @@ builder.Services.AddAuthentication(options =>
 
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
+builder.Services.AddTransient<IEmailService, EmailService>();
 builder.Services.AddSignalR();
 
 var app = builder.Build();
@@ -89,7 +111,7 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 
-app.UseCors(localCORS);
+app.UseCors(finalCORS);
 
 app.UseHttpsRedirection();
 

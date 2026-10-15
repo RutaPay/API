@@ -156,7 +156,7 @@ namespace Api.Controllers
             {
                 // Remover roles preferenciales anteriores si los tuviera y añadir el nuevo
                 var currentRoles = await _userManager.GetRolesAsync(request.User);
-                var preferentials = new[] { "Student", "Health", "Adult" };
+                var preferentials = new[] { "User", "Student", "Health", "Adult" };
                 foreach (var r in currentRoles.Where(r => preferentials.Contains(r)))
                 {
                     await _userManager.RemoveFromRoleAsync(request.User, r);

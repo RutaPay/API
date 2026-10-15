@@ -91,20 +91,24 @@ namespace Api.Controllers
 
             var token = _tokenService.CreateToken(user, roles);
 
-            Response.Cookies.Append("token", token, new CookieOptions
+            var cookieOptions = new CookieOptions
             {
                 HttpOnly = true,
                 Secure = true,   // Requires HTTPS
                 SameSite = SameSiteMode.None,
-                Expires = DateTime.UtcNow.AddDays(7)
-            });
+                Expires = DateTimeOffset.UtcNow.AddDays(7),
+                MaxAge = TimeSpan.FromDays(7),
+                IsEssential = true
+            };
+            cookieOptions.Extensions.Add("Partitioned");
+
+            Response.Cookies.Append("token", token, cookieOptions);
 
             return Ok(new NewUserDto
             {
                     UserName = user.UserName,
                     Email = user.Email,
                     PhoneNumber = user.PhoneNumber,
-                    //Token = _tokenService.CreateToken(user)
             });
         }
 
@@ -176,12 +180,16 @@ namespace Api.Controllers
         [Authorize]
         public ActionResult Logout()
         {
-            Response.Cookies.Delete("token", new CookieOptions
+            var cookieOptions = new CookieOptions
             {
                 HttpOnly = true,
                 Secure = true,
                 SameSite = SameSiteMode.None,
-            });
+                IsEssential = true
+            };
+            cookieOptions.Extensions.Add("Partitioned");
+
+            Response.Cookies.Delete("token", cookieOptions);
             return Ok();
         }
 
