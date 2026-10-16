@@ -279,11 +279,50 @@ namespace Api.Controllers
         public async Task<ActionResult> DeleteUser([FromRoute] string id)
         {
             var user = await _userManager.FindByIdAsync(id);
-            if (user == null) return NotFound();
+            if (user == null)
+            {
+                return NotFound(new { Message = "Usuario no encontrado." });
+            }
 
-            var result = await _userManager.DeleteAsync(user);
-            if (result.Succeeded) return NoContent();
-            return BadRequest(result.Errors);
+            // Un administrador no puede eliminar su propia cuenta (evita quedarse sin acceso al panel).
+            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var currentEmail = User.FindFirstValue(ClaimTypes.Email);
+            var isSelf = (!string.IsNullOrEmpty(currentUserId) && currentUserId == user.Id)
+                         || (!string.IsNullOrEmpty(currentEmail)
+                             && string.Equals(currentEmail, user.Email, StringComparison.OrdinalIgnoreCase));
+
+            if (isSelf)
+            {
+                return BadRequest(new { Message = "No puedes eliminar tu propia cuenta de administrador." });
+            }
+
+            try
+            {
+                // La base de datos elimina en cascada la tarjeta, los puntos, las transacciones,
+                // las solicitudes de verificación y las recompensas asociadas al usuario.
+                var result = await _userManager.DeleteAsync(user);
+                if (!result.Succeeded)
+                {
+                    return BadRequest(new
+                    {
+                        Message = "No se pudo eliminar el usuario.",
+                        Errors = result.Errors.Select(e => e.Description)
+                    });
+                }
+
+                return Ok(new
+                {
+                    Message = $"Usuario {user.Email} eliminado correctamente.",
+                    UserId = user.Id
+                });
+            }
+            catch (DbUpdateException ex)
+            {
+                return Problem(
+                    title: "No se pudo eliminar el usuario por datos relacionados.",
+                    detail: ex.InnerException?.Message ?? ex.Message,
+                    statusCode: StatusCodes.Status409Conflict);
+            }
         }
     }
 }

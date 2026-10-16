@@ -144,6 +144,38 @@ public static class TestHelpers
 
         return null;
     }
+
+    /// <summary>Busca el Id de un usuario por correo usando el padrón (solo Admin).</summary>
+    public static async Task<string?> GetUserIdByEmailAsync(HttpClient adminClient, string email)
+    {
+        var response = await adminClient.GetAsync("/api/account/all");
+        response.EnsureSuccessStatusCode();
+
+        var users = await ReadJsonAsync(response);
+        foreach (var user in users.EnumerateArray())
+        {
+            if (string.Equals(ReadString(user, "email"), email, StringComparison.OrdinalIgnoreCase))
+            {
+                return ReadString(user, "id");
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>Extrae el claim "sub" (Id del usuario) de un JWT.</summary>
+    public static string? GetUserIdFromToken(string jwt)
+    {
+        var parts = jwt.Split('.');
+        Assert.True(parts.Length >= 2, "El token no tiene el formato JWT esperado.");
+
+        var payload = parts[1].Replace('-', '+').Replace('_', '/');
+        payload = payload.PadRight(payload.Length + (4 - payload.Length % 4) % 4, '=');
+
+        var json = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(payload));
+        using var doc = JsonDocument.Parse(json);
+        return ReadString(doc.RootElement, "sub");
+    }
 }
 
 public sealed record TestUser(
