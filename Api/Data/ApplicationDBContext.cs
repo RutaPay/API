@@ -1,4 +1,5 @@
 using Api.Models;
+using Api.Service;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -17,6 +18,7 @@ namespace Api.Data
         public DbSet<VerificationRequest> VerificationRequests { get; set; }
         public DbSet<Reward> Rewards { get; set; }
         public DbSet<UserReward> UserRewards { get; set; }
+        public DbSet<Terminal> Terminals { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -113,6 +115,40 @@ namespace Api.Data
                 }
             };
             builder.Entity<Reward>().HasData(defaultRewards);
+
+            // ---- Terminales de pago a bordo de las unidades de transporte ----
+            builder.Entity<Terminal>()
+                .HasIndex(t => t.Code)
+                .IsUnique();
+
+            // Credenciales de demostración. Rótalas con
+            // POST /api/Terminals/{id}/rotate-credential antes de producción.
+            const string demoSalt = "rutapay-terminal-demo-salt-v1";
+            var demoCreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+
+            builder.Entity<Terminal>().HasData(
+                new Terminal
+                {
+                    Id = Guid.Parse("11111111-1111-1111-1111-111111111111"),
+                    Code = "VAL-NFC-04",
+                    BusUnitId = "UNIDAD-CEL-01",
+                    RouteName = "Ruta General Celaya",
+                    State = "Active",
+                    CredentialSalt = demoSalt,
+                    CredentialHash = HashService.Hash("rutapay-val-nfc-04-demo", demoSalt),
+                    CreatedAt = demoCreatedAt
+                },
+                new Terminal
+                {
+                    Id = Guid.Parse("22222222-2222-2222-2222-222222222222"),
+                    Code = "VAL-QR-07",
+                    BusUnitId = "UNIDAD-CEL-02",
+                    RouteName = "Ruta Universidad",
+                    State = "Active",
+                    CredentialSalt = demoSalt,
+                    CredentialHash = HashService.Hash("rutapay-val-qr-07-demo", demoSalt),
+                    CreatedAt = demoCreatedAt
+                });
         }
     }
 }

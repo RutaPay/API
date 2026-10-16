@@ -2,6 +2,7 @@ using Api.Data;
 using Api.Dtos.User;
 using Api.Interfaces;
 using Api.Models;
+using Api.Service;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -20,14 +21,16 @@ namespace Api.Controllers
         private readonly SignInManager<User> _signInManager;
         private readonly IUserRepository _userRepository;
         private readonly ApplicationDBContext _context;
+        private readonly IEmailService _emailService;
 
-        public AccountsController(UserManager<User> userManager, ITokenService tokenService, SignInManager<User> signInManager, IUserRepository userRepository, ApplicationDBContext dBContext)
+        public AccountsController(UserManager<User> userManager, ITokenService tokenService, SignInManager<User> signInManager, IUserRepository userRepository, ApplicationDBContext dBContext, IEmailService emailService)
         {
             _userManager = userManager;
             _tokenService = tokenService;
             _signInManager = signInManager;
             _userRepository = userRepository;
             _context = dBContext;
+            _emailService = emailService;
         }
 
         // GET: api/account
@@ -192,6 +195,13 @@ namespace Api.Controllers
             Response.Cookies.Delete("token", cookieOptions);
             return Ok();
         }
+
+        /* GET api/account/Test
+        [HttpGet("test")]
+        public void Test()
+        {
+            _emailService.SendVerificationEmailAsync("a", "a");
+        }*/
 
         //GET api/account/all
         [HttpGet("all")]

@@ -1,7 +1,9 @@
-﻿namespace Api.Interfaces
+using RestSharp;
+
+namespace Api.Interfaces
 {
     public interface IEmailService
     {
-        Task SendVerificationEmailAsync(string email, string verificationToken);
+        Task<RestResponse> SendVerificationEmailAsync(string email, string verificationToken);
     }
 }

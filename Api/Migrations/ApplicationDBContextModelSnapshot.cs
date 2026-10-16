@@ -17,7 +17,7 @@ namespace Api.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.10")
+                .HasAnnotation("ProductVersion", "10.0.13")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -137,6 +137,76 @@ namespace Api.Migrations
                         });
                 });
 
+            modelBuilder.Entity("Api.Models.Terminal", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("BusUnitId")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CredentialHash")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("CredentialSalt")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("RouteName")
+                        .HasMaxLength(120)
+                        .HasColumnType("nvarchar(120)");
+
+                    b.Property<string>("State")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Code")
+                        .IsUnique();
+
+                    b.ToTable("Terminals");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("11111111-1111-1111-1111-111111111111"),
+                            BusUnitId = "UNIDAD-CEL-01",
+                            Code = "VAL-NFC-04",
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CredentialHash = "xbwoCnM3lBsGvGUrBh542tlpBo2m+0+fs2uS3xfXLK0=",
+                            CredentialSalt = "rutapay-terminal-demo-salt-v1",
+                            RouteName = "Ruta General Celaya",
+                            State = "Active"
+                        },
+                        new
+                        {
+                            Id = new Guid("22222222-2222-2222-2222-222222222222"),
+                            BusUnitId = "UNIDAD-CEL-02",
+                            Code = "VAL-QR-07",
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CredentialHash = "zQ+dZ1ei1iYHqorOcddhLRwN6haotGj9K649ls7ubCg=",
+                            CredentialSalt = "rutapay-terminal-demo-salt-v1",
+                            RouteName = "Ruta Universidad",
+                            State = "Active"
+                        });
+                });
+
             modelBuilder.Entity("Api.Models.Transaction", b =>
                 {
                     b.Property<Guid>("Id")
@@ -185,6 +255,16 @@ namespace Api.Migrations
                         .HasMaxLength(30)
                         .HasColumnType("nvarchar(30)");
 
+                    b.Property<string>("TerminalCode")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<Guid?>("TerminalId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("TerminalSessionId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<string>("Type")
                         .IsRequired()
                         .HasMaxLength(50)
@@ -195,6 +275,8 @@ namespace Api.Migrations
                         .HasColumnType("nvarchar(450)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("TerminalId");
 
                     b.HasIndex("UserID");
 
@@ -560,11 +642,17 @@ namespace Api.Migrations
 
             modelBuilder.Entity("Api.Models.Transaction", b =>
                 {
+                    b.HasOne("Api.Models.Terminal", "Terminal")
+                        .WithMany()
+                        .HasForeignKey("TerminalId");
+
                     b.HasOne("Api.Models.User", "User")
                         .WithMany()
                         .HasForeignKey("UserID")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("Terminal");
 
                     b.Navigation("User");
                 });

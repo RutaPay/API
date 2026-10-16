@@ -11,26 +11,10 @@ using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
 
-var localCORS = "_localCORS";
-var productionCORS = "_productionCORS";
 var finalCORS = "_finalCORS";
 
 builder.Services.AddCors(options =>
 {
-    /*options.AddPolicy(name: localCORS, policy =>
-    {
-        policy.WithOrigins("http://localhost:5173") // URL con puertos Vite/Vue
-               .AllowAnyMethod()
-               .AllowAnyHeader()
-               .AllowCredentials();
-    });
-    options.AddPolicy(name: productionCORS, policy =>
-    {
-        policy.WithOrigins("https://rutapay.de5.net") // RutaPay Web
-               .AllowAnyMethod()
-               .AllowAnyHeader()
-               .AllowCredentials();
-    });*/
     options.AddPolicy(name: finalCORS, policy =>
     {
         policy.WithOrigins("http://localhost:5173", "https://rutapay.de5.net") // Todo
@@ -87,6 +71,16 @@ builder.Services.AddAuthentication(options =>
     {
         OnMessageReceived = context =>
         {
+            // SignalR (WebSockets) envía el JWT en la query string access_token.
+            var accessToken = context.Request.Query["access_token"];
+            var path = context.HttpContext.Request.Path;
+            if (!string.IsNullOrEmpty(accessToken) &&
+                path.StartsWithSegments("/payments/paymentHub"))
+            {
+                context.Token = accessToken;
+                return Task.CompletedTask;
+            }
+
             var cookieToken = context.Request.Cookies["token"];
             if (!string.IsNullOrEmpty(cookieToken))
             {
@@ -119,6 +113,6 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
-app.MapHub<PaymentHub>("/Payments/paymentHub");
+app.MapHub<PaymentHub>("/payments/paymentHub");
 
 app.Run();

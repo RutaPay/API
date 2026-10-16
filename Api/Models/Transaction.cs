@@ -42,6 +42,17 @@ namespace Api.Models
         [MaxLength(50)]
         public string? BusUnitId { get; set; }
 
+        // Terminal validadora que emitió el token de sesión usado en el pago.
+        [ForeignKey("Terminal")]
+        public Guid? TerminalId { get; set; }
+        public Terminal? Terminal { get; set; }
+
+        [MaxLength(50)]
+        public string? TerminalCode { get; set; }
+
+        // Nonce de la sesión de terminal: permite deduplicar el mismo escaneo.
+        public Guid? TerminalSessionId { get; set; }
+
         // Card, SPEI, OXXO, QR_Pass, Points_Redeem
         [MaxLength(50)]
         public string? PaymentMethod { get; set; }

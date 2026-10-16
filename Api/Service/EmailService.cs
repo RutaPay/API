@@ -1,9 +1,8 @@
-﻿using Api.Interfaces;
+using Api.Interfaces;
 using Api.Models;
-using MailKit.Net.Smtp;
-using MailKit.Security;
 using Microsoft.Extensions.Options;
-using MimeKit;
+using RestSharp;
+using RestSharp.Authenticators;
 
 namespace Api.Service
 {
@@ -16,9 +15,9 @@ namespace Api.Service
             _emailSettings = emailSettings.Value;
         }
 
-        public async Task SendVerificationEmailAsync(string email, string verificationToken)
+        public async Task<RestResponse> SendVerificationEmailAsync(string email, string verificationToken)
         {
-            var message = new MimeMessage();
+            /*var message = new MimeMessage();
             message.From.Add(new MailboxAddress(_emailSettings.SenderName, _emailSettings.SenderEmail));
             message.To.Add(new MailboxAddress("", email));
             message.Subject = "Verifica tu cuenta";
@@ -50,7 +49,32 @@ namespace Api.Service
             finally
             {
                 await client.DisconnectAsync(true);
-            }
+            }*/
+            var apiKey = !string.IsNullOrWhiteSpace(_emailSettings.ApiKey)
+                ? _emailSettings.ApiKey
+                : Environment.GetEnvironmentVariable("API_KEY") ?? "";
+
+            var domain = !string.IsNullOrWhiteSpace(_emailSettings.Domain)
+                ? _emailSettings.Domain
+                : "rutapay.de5.net";
+
+            var baseUrl = !string.IsNullOrWhiteSpace(_emailSettings.BaseUrl)
+                ? _emailSettings.BaseUrl
+                : "https://api.mailgun.net";
+
+            var options = new RestClientOptions(baseUrl)
+            {
+                Authenticator = new HttpBasicAuthenticator("api", apiKey)
+            };
+
+            var client = new RestClient(options);
+            var request = new RestRequest($"/v3/{domain}/messages", Method.Post);
+            request.AlwaysMultipartFormData = true;
+            request.AddParameter("from", "Mailgun Sandbox <postmaster@rutapay.de5.net>");
+            request.AddParameter("to", "RutaPay <rutapaymx@gmail.com>");
+            request.AddParameter("subject", "Hello RutaPay");
+            request.AddParameter("text", "Congratulations RutaPay, you just sent an email with Mailgun! You are truly awesome!");
+            return await client.ExecuteAsync(request);
         }
     }
 }

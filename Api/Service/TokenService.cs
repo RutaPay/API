@@ -9,6 +9,9 @@ namespace Api.Service
 {
     public class TokenService : ITokenService
     {
+        /// <summary>Valor del claim "Purpose" de los tokens de sesión de terminal.</summary>
+        public const string TerminalSessionPurpose = "TerminalPaymentSession";
+
         private readonly IConfiguration _config;
         private readonly SymmetricSecurityKey _key;
         public TokenService(IConfiguration config)
@@ -21,6 +24,7 @@ namespace Api.Service
         {
             var claims = new List<Claim>
             {
+                new Claim(JwtRegisteredClaimNames.Sub, user.Id),
                 new Claim(JwtRegisteredClaimNames.PreferredUsername, user.UserName),
                 new Claim(JwtRegisteredClaimNames.GivenName, user.FullName),
                 new Claim(JwtRegisteredClaimNames.FamilyName, user.LastNames),
@@ -52,6 +56,7 @@ namespace Api.Service
         {
             var claims = new List<Claim>
             {
+                new Claim(JwtRegisteredClaimNames.Sub, user.Id),
                 new Claim(JwtRegisteredClaimNames.PreferredUsername, user.UserName),
                 new Claim(JwtRegisteredClaimNames.GivenName, user.FullName),
                 new Claim(JwtRegisteredClaimNames.FamilyName, user.LastNames),
@@ -134,6 +139,48 @@ namespace Api.Service
         }
 
         public ClaimsPrincipal? GetPrincipalFromPaymentToken(string token)
+        {
+            return ValidateToken(token);
+        }
+
+        /// <summary>
+        /// Genera el token de sesión firmado de una terminal (QR/NFC del viaje).
+        /// De corta duración y con un nonce de sesión para dificultar el reuso.
+        /// </summary>
+        public string CreateTerminalSessionToken(Terminal terminal, string sessionId, int lifetimeSeconds = 180)
+        {
+            var claims = new List<Claim>
+            {
+                new Claim(ClaimTypes.NameIdentifier, terminal.Id.ToString()),
+                new Claim("Purpose", TerminalSessionPurpose),
+                new Claim("TerminalCode", terminal.Code),
+                new Claim("BusUnitId", terminal.BusUnitId),
+                new Claim("Route", terminal.RouteName ?? "Ruta General"),
+                new Claim("SessionId", sessionId)
+            };
+
+            var creds = new SigningCredentials(_key, SecurityAlgorithms.HmacSha512Signature);
+            var tokenDescriptor = new SecurityTokenDescriptor
+            {
+                Subject = new ClaimsIdentity(claims),
+                Expires = DateTime.UtcNow.AddSeconds(lifetimeSeconds),
+                SigningCredentials = creds,
+                Issuer = _config["Jwt:Issuer"],
+                Audience = _config["Jwt:Audience"]
+            };
+
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var token = tokenHandler.CreateToken(tokenDescriptor);
+
+            return tokenHandler.WriteToken(token);
+        }
+
+        public ClaimsPrincipal? GetPrincipalFromTerminalSessionToken(string token)
+        {
+            return ValidateToken(token);
+        }
+
+        private ClaimsPrincipal? ValidateToken(string token)
         {
             var tokenHandler = new JwtSecurityTokenHandler();
             try
