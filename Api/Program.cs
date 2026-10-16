@@ -116,3 +116,6 @@ app.MapControllers();
 app.MapHub<PaymentHub>("/payments/paymentHub");
 
 app.Run();
+
+// Expone el punto de entrada para las pruebas de integración (WebApplicationFactory<Program>).
+public partial class Program { }
