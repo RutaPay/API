@@ -47,11 +47,13 @@ namespace Api.Controllers
             var cardUID = User.FindFirstValue("CardUID");
 
             var user = await _userRepository.GetUserByEmailAsync(email);
+            if (user == null) return Unauthorized();
 
-            var cardBalance = user.Card.Balance.ToString("F2");
-            var points = user.Point.Points;
+            var roles = await _userManager.GetRolesAsync(user);
+            var accType = roles.FirstOrDefault();
+            var cardBalance = user.Card?.Balance.ToString("F2");
+            var points = user.Point?.Points;
             var createdOn = User.FindFirstValue("CreatedOn");
-            var accType = _userManager.GetRolesAsync(await _userManager.FindByNameAsync(userName)).Result.FirstOrDefault();
 
             return Ok(new 
             {
@@ -62,7 +64,7 @@ namespace Api.Controllers
                 PhoneNumber = phoneNumber,
                 CardUID = cardUID,
                 CardBalance = cardBalance,
-                CardStatus = user?.Card?.State ?? "Active",
+                CardStatus = user.Card?.State ?? "Active",
                 Points = points,
                 CreatedOn = createdOn,
                 AccountType = accType,
